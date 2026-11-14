@@ -18,12 +18,12 @@ void scan_matrix()
 {
     for (int c = 0; c < NUMBER_OF_COLS; c++)
     {
-        digitalWrite(colPins[c], LOW);
-        pinMode(colPins[c], OUTPUT);
+        digitalWrite(col_pins[c], LOW);
+        pinMode(col_pins[c], OUTPUT);
         delayMicroseconds(COL_SETTLE_MICRO_S);
         // The row pin becomes low when it connects to a col pin that was set to low and as output
-        for (int r = 0; r < NUMBER_OF_ROWS; r++) state.raw_state[c][r] = digitalRead(rowPins[r]) == LOW;
-        pinMode(colPins[c], INPUT_PULLUP);
+        for (int r = 0; r < NUMBER_OF_ROWS; r++) state.raw_state[c][r] = digitalRead(row_pins[r]) == LOW;
+        pinMode(col_pins[c], INPUT_PULLUP);
     }
 }
 
@@ -33,8 +33,8 @@ void setup()
     // Setup every pin to PULLUP when at idle. This means that we can pass an output low to
     // then read low. Doing it this way avoids making a circuit with pull up resistors
     // since the ESP32 does it for us with this mode.
-    for (const unsigned char rowPin : rowPins) pinMode(rowPin, INPUT_PULLUP);
-    for (const unsigned char colPin : colPins) pinMode(colPin, INPUT_PULLUP);
+    for (const unsigned char rowPin : row_pins) pinMode(rowPin, INPUT_PULLUP);
+    for (const unsigned char colPin : col_pins) pinMode(colPin, INPUT_PULLUP);
     Keyboard.begin();
     USB.begin();
     Serial.println("VIC-20 keyboard ready");
@@ -59,6 +59,7 @@ void loop()
             else if (event.type == KeyEventType::Release)
             {
                 Keyboard.releaseRaw(event.code);
+                Serial.printf("UP   col%d row%d -> 0x%02X\n", c, r, event.code);
             }
         }
     }

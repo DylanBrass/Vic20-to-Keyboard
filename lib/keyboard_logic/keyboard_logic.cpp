@@ -13,6 +13,7 @@ const uint8_t keymap[NUMBER_OF_COLS][NUMBER_OF_ROWS] = {
     {K_Q, K_E, K_T, K_U, K_O, K_F5, K_BACKSLASH, K_LBRACKET},
     {K_SPACE, K_Z, K_C, K_B, K_M, K_F1, K_RSHIFT, K_PERIOD},
     {K_ESC, K_LSHIFT, K_X, K_V, K_N, K_DOWN, K_SLASH, K_COMMA},
+    {K_LGUI, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE},
 };
 
 /**

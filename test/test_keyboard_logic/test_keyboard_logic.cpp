@@ -202,6 +202,29 @@ void test_releases_are_never_blocked_by_ghost_check()
 
 #pragma endregion
 
+#pragma region Restore
+
+void test_restore_sends_windows_key()
+{
+    const KeyEvent press = settle(8, 0, true);
+    TEST_ASSERT_EQUAL(KeyEventType::Press, press.type);
+    TEST_ASSERT_EQUAL_UINT8(K_LGUI, press.code);
+
+    const KeyEvent release = settle(8, 0, false);
+    TEST_ASSERT_EQUAL(KeyEventType::Release, release.type);
+    TEST_ASSERT_EQUAL_UINT8(K_LGUI, release.code);
+}
+
+void test_restore_is_never_a_ghost()
+{
+    settle(2, 1, true);
+    settle(5, 1, true);
+    settle(2, 4, true);
+    TEST_ASSERT_FALSE(is_possible_ghost(state, 8, 0));
+}
+
+#pragma endregion
+
 #pragma region Keymap
 
 void test_keymap_has_no_duplicate_codes()
@@ -213,6 +236,7 @@ void test_keymap_has_no_duplicate_codes()
         {
             const uint8_t a = keymap[i / NUMBER_OF_ROWS][i % NUMBER_OF_ROWS];
             const uint8_t b = keymap[j / NUMBER_OF_ROWS][j % NUMBER_OF_ROWS];
+            if (a == K_NONE) continue;
             TEST_ASSERT_NOT_EQUAL_MESSAGE(a, b, "two switches share the same key code");
         }
     }
@@ -249,6 +273,9 @@ int main()
     RUN_TEST(test_ghost_check_works_for_every_corner);
     RUN_TEST(test_ghost_press_is_not_sent_until_pattern_disappears);
     RUN_TEST(test_releases_are_never_blocked_by_ghost_check);
+
+    RUN_TEST(test_restore_sends_windows_key);
+    RUN_TEST(test_restore_is_never_a_ghost);
 
     RUN_TEST(test_keymap_has_no_duplicate_codes);
     RUN_TEST(test_plus_and_equals_are_separate_keys);

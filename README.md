@@ -203,7 +203,7 @@ Hardware settings are in `include/config.h`:
 
 | Constant              | Purpose                               | Default          |
 |-----------------------|---------------------------------------|------------------|
-| `rowPins` / `colPins` | GPIO assignments                      | see wiring table |
+| `rowPins` / `col_pins` | GPIO assignments                      | see wiring table |
 | `COL_SETTLE_MICRO_S`  | Delay after driving a column low (µs) | 300              |
 | `SERIAL_BAUD`         | Debug serial speed                    | 115200           |
 

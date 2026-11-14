@@ -8,7 +8,7 @@
 #include <cstdint>
 
 constexpr uint8_t NUMBER_OF_ROWS = 8;
-constexpr uint8_t NUMBER_OF_COLS = 8;
+constexpr uint8_t NUMBER_OF_COLS = 9;
 
 constexpr uint8_t DEBOUNCE_THRESHOLD = 3;
 
