@@ -1,0 +1,51 @@
+//
+// Created by dylanbrass on 2026-11-13.
+//
+
+#ifndef VIC20_KEYBOARD_KEYBOARD_KEYS_H
+#define VIC20_KEYBOARD_KEYBOARD_KEYS_H
+#include <cstdint>
+
+enum KeyCode : uint8_t
+{
+    K_A = 0x04, K_B = 0x05, K_C = 0x06, K_D = 0x07, K_E = 0x08,
+    K_F = 0x09, K_G = 0x0A, K_H = 0x0B, K_I = 0x0C, K_J = 0x0D,
+    K_K = 0x0E, K_L = 0x0F, K_M = 0x10, K_N = 0x11, K_O = 0x12,
+    K_P = 0x13, K_Q = 0x14, K_R = 0x15, K_S = 0x16, K_T = 0x17,
+    K_U = 0x18, K_V = 0x19, K_W = 0x1A, K_X = 0x1B, K_Y = 0x1C,
+    K_Z = 0x1D,
+    K_1 = 0x1E, K_2 = 0x1F, K_3 = 0x20, K_4 = 0x21, K_5 = 0x22,
+    K_6 = 0x23, K_7 = 0x24, K_8 = 0x25, K_9 = 0x26, K_0 = 0x27,
+    K_ENTER = 0x28,
+    K_ESC = 0x29,
+    K_BKSP = 0x2A,
+    K_SPACE = 0x2C,
+    K_MINUS = 0x2D,
+    K_EQUAL = 0x2E,
+    K_LBRACKET = 0x2F,
+    K_RBRACKET = 0x30,
+    K_BACKSLASH = 0x31,
+    K_SEMI = 0x33,
+    K_QUOTE = 0x34,
+    K_GRAVE = 0x35,
+    K_COMMA = 0x36,
+    K_PERIOD = 0x37,
+    K_SLASH = 0x38,
+    K_F1 = 0x3A,
+    K_F3 = 0x3C,
+    K_F5 = 0x3E,
+    K_F7 = 0x40,
+    K_HOME = 0x4A,
+    K_DEL = 0x4C,
+    K_RIGHT = 0x4F,
+    K_LEFT = 0x50,
+    K_DOWN = 0x51,
+    K_UP = 0x52,
+    K_KPPLUS = 0x57,
+    K_LCTRL = 0xE0,
+    K_LSHIFT = 0xE1,
+    K_LALT = 0xE2,
+    K_RSHIFT = 0xE5,
+};
+
+#endif //VIC20_KEYBOARD_KEYBOARD_KEYS_H
