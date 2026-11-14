@@ -1,5 +1,7 @@
 # VIC-20 USB Keyboard
 
+[![Tests](https://github.com/DylanBrass/Vic20-to-Keyboard/actions/workflows/tests.yml/badge.svg)](https://github.com/DylanBrass/Vic20-to-Keyboard/actions/workflows/tests.yml)
+
 Turn a Commodore VIC-20 keyboard into a modern USB keyboard using an ESP32-S3. The firmware scans the VIC-20's 8x8 key
 matrix and sends the keys to your computer as a standard USB HID keyboard, using the ESP32-S3's native USB.
 
