@@ -13,6 +13,13 @@ constexpr uint8_t HID_F4 = 0x3D;
 constexpr uint8_t HID_F6 = 0x3F;
 constexpr uint8_t HID_F8 = 0x41;
 
+constexpr int LSHIFT_COL = 7;
+constexpr int LSHIFT_ROW = 1;
+constexpr int RUN_STOP_COL = 7;
+constexpr int RUN_STOP_ROW = 0;
+constexpr int F1_COL = 6;
+constexpr int F1_ROW = 5;
+
 static KeyboardState state;
 
 void setUp() { memset(&state, 0, sizeof(state)); }
@@ -27,38 +34,72 @@ static KeyEvent settle(const int col, const int row, const bool down)
     return event;
 }
 
-#pragma region Shift
+#pragma region Commodore layer
 
-void test_resolve_without_shift_passes_codes_through()
+void test_left_arrow_is_grave_and_cbm_left_arrow_is_caps_lock()
+{
+    TEST_ASSERT_EQUAL_UINT8(K_GRAVE, settle(2, 0, true).code);
+    settle(2, 0, false);
+
+    state.stable_state[CBM_COL][CBM_ROW] = true;
+    const KeyEvent event = settle(2, 0, true);
+    TEST_ASSERT_EQUAL(KeyEventType::Press, event.type);
+    TEST_ASSERT_EQUAL_UINT8(K_CAPS, event.code);
+}
+
+void test_resolve_without_cbm_passes_codes_through()
 {
     TEST_ASSERT_EQUAL_UINT8(K_F1, resolve(state, K_F1));
     TEST_ASSERT_EQUAL_UINT8(K_DOWN, resolve(state, K_DOWN));
     TEST_ASSERT_EQUAL_UINT8(K_RIGHT, resolve(state, K_RIGHT));
-    TEST_ASSERT_EQUAL_UINT8(K_A, resolve(state, K_A));
+    TEST_ASSERT_EQUAL_UINT8(K_LALT, resolve(state, K_LALT));
+    TEST_ASSERT_EQUAL_UINT8(K_LSHIFT, resolve(state, K_LSHIFT));
 }
 
-void test_resolve_with_left_shift_translates_keys()
+void test_resolve_with_cbm_translates_keys()
 {
-    state.stable_state[LSHIFT_COL][LSHIFT_ROW] = true;
+    state.stable_state[CBM_COL][CBM_ROW] = true;
     TEST_ASSERT_EQUAL_UINT8(HID_F2, resolve(state, K_F1));
     TEST_ASSERT_EQUAL_UINT8(HID_F4, resolve(state, K_F3));
     TEST_ASSERT_EQUAL_UINT8(HID_F6, resolve(state, K_F5));
     TEST_ASSERT_EQUAL_UINT8(HID_F8, resolve(state, K_F7));
     TEST_ASSERT_EQUAL_UINT8(K_UP, resolve(state, K_DOWN));
     TEST_ASSERT_EQUAL_UINT8(K_LEFT, resolve(state, K_RIGHT));
+    TEST_ASSERT_EQUAL_UINT8(K_DEL, resolve(state, K_BKSP));
+    TEST_ASSERT_EQUAL_UINT8(K_TAB, resolve(state, K_LSHIFT));
+    TEST_ASSERT_EQUAL_UINT8(K_TAB, resolve(state, K_RSHIFT));
 }
 
-void test_resolve_with_right_shift_also_translates()
+void test_resolve_with_cbm_leaves_other_keys_alone()
 {
-    state.stable_state[RSHIFT_COL][RSHIFT_ROW] = true;
-    TEST_ASSERT_EQUAL_UINT8(HID_F2, resolve(state, K_F1));
-}
-
-void test_resolve_with_shift_leaves_other_keys_alone()
-{
-    state.stable_state[LSHIFT_COL][LSHIFT_ROW] = true;
+    state.stable_state[CBM_COL][CBM_ROW] = true;
     TEST_ASSERT_EQUAL_UINT8(K_A, resolve(state, K_A));
     TEST_ASSERT_EQUAL_UINT8(K_ENTER, resolve(state, K_ENTER));
+}
+
+void test_shift_alone_does_not_translate_keys()
+{
+    state.stable_state[LSHIFT_COL][LSHIFT_ROW] = true;
+    TEST_ASSERT_EQUAL_UINT8(K_F1, resolve(state, K_F1));
+    TEST_ASSERT_EQUAL_UINT8(K_DOWN, resolve(state, K_DOWN));
+    TEST_ASSERT_EQUAL_UINT8(K_RIGHT, resolve(state, K_RIGHT));
+}
+
+void test_cbm_sends_nothing_by_itself()
+{
+    TEST_ASSERT_EQUAL(KeyEventType::None, settle(CBM_COL, CBM_ROW, true).type);
+    TEST_ASSERT_TRUE(state.stable_state[CBM_COL][CBM_ROW]);
+    TEST_ASSERT_EQUAL(KeyEventType::None, settle(CBM_COL, CBM_ROW, false).type);
+    TEST_ASSERT_FALSE(state.stable_state[CBM_COL][CBM_ROW]);
+}
+
+void test_cbm_shift_sends_tab_and_plain_shift_sends_shift()
+{
+    TEST_ASSERT_EQUAL_UINT8(K_LSHIFT, settle(LSHIFT_COL, LSHIFT_ROW, true).code);
+    settle(LSHIFT_COL, LSHIFT_ROW, false);
+
+    state.stable_state[CBM_COL][CBM_ROW] = true;
+    TEST_ASSERT_EQUAL_UINT8(K_TAB, settle(LSHIFT_COL, LSHIFT_ROW, true).code);
 }
 
 #pragma endregion
@@ -115,22 +156,22 @@ void test_held_key_sends_nothing_more()
 
 #pragma region Sent code
 
-void test_press_with_shift_sends_translated_code()
+void test_press_with_cbm_sends_translated_code()
 {
-    state.stable_state[LSHIFT_COL][LSHIFT_ROW] = true;
-    const KeyEvent event = settle(6, 5, true);
+    state.stable_state[CBM_COL][CBM_ROW] = true;
+    const KeyEvent event = settle(F1_COL, F1_ROW, true);
     TEST_ASSERT_EQUAL(KeyEventType::Press, event.type);
     TEST_ASSERT_EQUAL_UINT8(HID_F2, event.code);
 }
 
-void test_release_uses_code_that_was_sent_even_if_shift_changed()
+void test_release_uses_code_that_was_sent_even_if_cbm_changed()
 {
-    state.stable_state[LSHIFT_COL][LSHIFT_ROW] = true;
-    TEST_ASSERT_EQUAL_UINT8(HID_F2, settle(6, 5, true).code);
+    state.stable_state[CBM_COL][CBM_ROW] = true;
+    TEST_ASSERT_EQUAL_UINT8(HID_F2, settle(F1_COL, F1_ROW, true).code);
 
-    state.stable_state[LSHIFT_COL][LSHIFT_ROW] = false;
+    state.stable_state[CBM_COL][CBM_ROW] = false;
 
-    const KeyEvent event = settle(6, 5, false);
+    const KeyEvent event = settle(F1_COL, F1_ROW, false);
     TEST_ASSERT_EQUAL(KeyEventType::Release, event.type);
     TEST_ASSERT_EQUAL_UINT8(HID_F2, event.code);
 }
@@ -248,24 +289,32 @@ void test_plus_and_equals_are_separate_keys()
     TEST_ASSERT_EQUAL_UINT8(K_EQUAL, keymap[3][6]);
 }
 
+void test_cbm_position_has_no_code_of_its_own()
+{
+    TEST_ASSERT_EQUAL_UINT8(K_NONE, keymap[CBM_COL][CBM_ROW]);
+}
+
 #pragma endregion
 
 int main()
 {
     UNITY_BEGIN();
 
-    RUN_TEST(test_resolve_without_shift_passes_codes_through);
-    RUN_TEST(test_resolve_with_left_shift_translates_keys);
-    RUN_TEST(test_resolve_with_right_shift_also_translates);
-    RUN_TEST(test_resolve_with_shift_leaves_other_keys_alone);
+    RUN_TEST(test_resolve_without_cbm_passes_codes_through);
+    RUN_TEST(test_resolve_with_cbm_translates_keys);
+    RUN_TEST(test_resolve_with_cbm_leaves_other_keys_alone);
+    RUN_TEST(test_shift_alone_does_not_translate_keys);
+    RUN_TEST(test_cbm_sends_nothing_by_itself);
+    RUN_TEST(test_cbm_shift_sends_tab_and_plain_shift_sends_shift);
+    RUN_TEST(test_left_arrow_is_grave_and_cbm_left_arrow_is_caps_lock);
 
     RUN_TEST(test_press_is_only_sent_after_debounce_threshold);
     RUN_TEST(test_short_blip_is_ignored_as_bounce);
     RUN_TEST(test_release_is_sent_after_debounce_threshold);
     RUN_TEST(test_held_key_sends_nothing_more);
 
-    RUN_TEST(test_press_with_shift_sends_translated_code);
-    RUN_TEST(test_release_uses_code_that_was_sent_even_if_shift_changed);
+    RUN_TEST(test_press_with_cbm_sends_translated_code);
+    RUN_TEST(test_release_uses_code_that_was_sent_even_if_cbm_changed);
 
     RUN_TEST(test_single_key_is_not_a_ghost);
     RUN_TEST(test_two_other_keys_are_not_enough_for_a_ghost);
@@ -279,6 +328,7 @@ int main()
 
     RUN_TEST(test_keymap_has_no_duplicate_codes);
     RUN_TEST(test_plus_and_equals_are_separate_keys);
+    RUN_TEST(test_cbm_position_has_no_code_of_its_own);
 
     return UNITY_END();
 }

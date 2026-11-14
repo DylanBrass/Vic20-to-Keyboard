@@ -12,12 +12,10 @@ constexpr uint8_t NUMBER_OF_COLS = 9;
 
 constexpr uint8_t DEBOUNCE_THRESHOLD = 3;
 
-constexpr uint8_t FN_SHIFT_OFFSET = 1;
+constexpr uint8_t FN_COMBO_OFFSET = 1;
 
-constexpr uint8_t LSHIFT_COL = 7;
-constexpr uint8_t LSHIFT_ROW = 1;
-constexpr uint8_t RSHIFT_COL = 6;
-constexpr uint8_t RSHIFT_ROW = 6;
+constexpr uint8_t CBM_COL = 3;
+constexpr uint8_t CBM_ROW = 0;
 
 struct KeyboardState
 {
@@ -35,8 +33,8 @@ struct KeyboardState
     uint8_t debounce_count[NUMBER_OF_COLS][NUMBER_OF_ROWS];
 
     // What code the key sent to the device
-    // This allows the program the release of the key, for example Shift + f1 gives f2.
-    // If the user releases shift first, and later on f1, we need to send the release of f2
+    // This allows the program the release of the key, for example commodore + f1 gives f2.
+    // If the user releases commodore first, and later on f1, we need to send the release of f2
     uint8_t sent_code[NUMBER_OF_COLS][NUMBER_OF_ROWS];
 };
 
@@ -55,7 +53,7 @@ struct KeyEvent
 
 extern const uint8_t keymap[NUMBER_OF_COLS][NUMBER_OF_ROWS];
 
-bool shift_held(const KeyboardState& state);
+bool cbm_held(const KeyboardState& state);
 uint8_t resolve(const KeyboardState& state, uint8_t code);
 bool is_possible_ghost(const KeyboardState& state, int col, int row);
 KeyEvent get_key_action(KeyboardState& state, int col, int row);

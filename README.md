@@ -2,26 +2,36 @@
 
 [![Tests](https://github.com/DylanBrass/Vic20-to-Keyboard/actions/workflows/tests.yml/badge.svg)](https://github.com/DylanBrass/Vic20-to-Keyboard/actions/workflows/tests.yml)
 
-Turn a Commodore VIC-20 keyboard into a modern USB keyboard using an ESP32-S3. The firmware scans the VIC-20's 8x8 key
+Turn a Commodore VIC-20 keyboard into a modern USB keyboard using an ESP32-S3. The firmware scans the VIC-20's key
 matrix and sends the keys to your computer as a standard USB HID keyboard, using the ESP32-S3's native USB.
 
 ## Features
 
-- Scans the VIC-20's 8x8 keyboard matrix
+- Scans the VIC-20's 8x8 keyboard matrix, plus RESTORE wired in as a ninth column
 - Appears as a plain USB HID keyboard, with no drivers needed
 - Software debouncing
 - Ghost key detection, which ignores phantom presses from the matrix
-- VIC-20 style **Shift** behaviour for keys that are separate on a PC:
-    - `Shift + F1/F3/F5/F7` sends `F2/F4/F6/F8`
-    - `Shift + Down` sends `Up`
-    - `Shift + Right` sends `Left`
+- A **Commodore key layer** for keys that are separate on a PC (the Commodore key sends nothing by itself):
+
+  | Keys                                  | Sends                       |
+    |---------------------------------------|-----------------------------|
+  | `Commodore + F1/F3/F5/F7`             | `F2/F4/F6/F8`               |
+  | `Commodore + CRSR Down`               | `Up`                        |
+  | `Commodore + CRSR Right`              | `Left`                      |
+  | `Commodore + Shift`                   | `Tab`                       |
+  | `Commodore + RUN/STOP`                | `Esc`                       |
+  | `Commodore + ←`                       | `Caps Lock`                 |
+
+- `£` is `Alt`, and `RESTORE` is the Windows key (Command on a Mac)
+- `←` is a backtick in en_US
+- Shift is a plain Shift, with no translation
 - Separate `+` and `=` keys, as on the original keyboard
 - Serial debug output of every key press
 - Key logic kept separate from the hardware code, with unit tests that run on your PC
 
 ## Hardware
 
-- A Commodore VIC-20 keyboard (8 row lines + 8 column lines)
+- A Commodore VIC-20 keyboard (8 row lines + 8 column lines + the RESTORE switch)
 - An ESP32-S3 board with native USB (the USB port connected to the chip's USB pins, not only a UART bridge)
 - Jumper wires or a breakout for the keyboard connector
 
@@ -29,26 +39,32 @@ No resistors are needed for the matrix, since the firmware uses the ESP32's inte
 
 ### Wiring
 
-| Matrix line | ESP32-S3 GPIO |
-|-------------|---------------|
-| Row 0       | 4             |
-| Row 1       | 5             |
-| Row 2       | 6             |
-| Row 3       | 7             |
-| Row 4       | 15            |
-| Row 5       | 16            |
-| Row 6       | 17            |
-| Row 7       | 18            |
-| Col 0       | 8             |
-| Col 1       | 9             |
-| Col 2       | 10            |
-| Col 3       | 11            |
-| Col 4       | 12            |
-| Col 5       | 13            |
-| Col 6       | 14            |
-| Col 7       | 21            |
+| Matrix line     | ESP32-S3 GPIO |
+|-----------------|---------------|
+| Row 0           | 4             |
+| Row 1           | 5             |
+| Row 2           | 6             |
+| Row 3           | 7             |
+| Row 4           | 15            |
+| Row 5           | 16            |
+| Row 6           | 17            |
+| Row 7           | 18            |
+| Col 0           | 8             |
+| Col 1           | 9             |
+| Col 2           | 10            |
+| Col 3           | 11            |
+| Col 4           | 12            |
+| Col 5           | 13            |
+| Col 6           | 14            |
+| Col 7           | 21            |
+| Col 8 (RESTORE) | 38            |
+
+RESTORE is not part of the original matrix, so it is wired as a ninth column: one of its two wires goes to the **Row 0**
+line (GPIO 4, joined at the same point as that row's jumper) and the other goes to **GPIO 38**.
 
 Pins can be changed in `include/config.h`. Avoid the ESP32-S3 strapping pins (0, 3, 45, 46) and the USB pins (19, 20).
+On some DevKitC-1 revisions GPIO 38 also drives the onboard RGB LED, which may flicker as the column is scanned. If it
+does, move the RESTORE column to another free GPIO in `col_pins`.
 
 > Which keyboard connector pin maps to which row or column depends on your VIC-20 revision. Use a multimeter's
 > continuity mode to trace them, or check the VIC-20 schematic.
@@ -63,7 +79,7 @@ Vic20_Keyboard/
 │   └── keyboard_logic/           # Self-contained library, no Arduino or USB code
 │       ├── keyboard_keys.h       # USB HID key codes (enum)
 │       ├── keyboard_logic.h      # Matrix constants, KeyboardState, function declarations
-│       └── keyboard_logic.cpp    # Keymap, debouncing, ghost detection, Shift handling
+│       └── keyboard_logic.cpp    # Keymap, debouncing, ghost detection, Commodore layer
 ├── src/
 │   └── main.cpp                  # Hardware code: matrix scanning and sending USB events
 ├── test/
@@ -109,13 +125,18 @@ On Windows, the `native` environment needs a C/C++ compiler such as MinGW instal
 
 The tests cover:
 
-- **Shift:** left and right Shift both work, and F1/F3/F5/F7, Down and Right are translated correctly
+- **Commodore layer:** F1/F3/F5/F7, Down, Right, RUN/STOP and Shift are translated while Commodore is held, other keys
+  are left alone, Shift on its own translates nothing, and the Commodore key sends nothing by itself
+- **Special keys:** RUN/STOP is Alt (Esc with Commodore), `←` is a backtick (Caps Lock with Commodore), and Shift is Tab
+  with Commodore
 - **Debouncing:** a press is only sent after `DEBOUNCE_THRESHOLD` scans, short blips are ignored, and releases are
   debounced too
-- **`sent_code`:** releasing a key releases the code that was sent, even if Shift was released first
+- **`sent_code`:** releasing a key releases the code that was sent, even if Commodore was released first
 - **Ghost detection:** three pressed corners make the fourth a possible ghost, the ghost key is held back until the
   pattern disappears, and releases are never blocked
-- **Keymap:** no two switches share the same key code, and `+` and `=` are separate keys
+- **RESTORE:** it sends and releases the Windows key, and it can never be flagged as a ghost
+- **Keymap:** no two switches share the same key code (empty positions are ignored), `+` and `=` are separate keys, and
+  the Commodore position has no code of its own
 
 The matrix scanning and USB code in `main.cpp` talk to hardware, so they can only be checked on a real board.
 
@@ -131,12 +152,13 @@ All key state lives in one `KeyboardState` struct, with one entry per switch (`[
 | `sent_code`      | The USB code sent when each key went down                             |
 
 Each pass of `loop()` calls `scan_matrix()` to fill `raw_state`. It then calls `get_key_action()` for every key. That
-function does the debouncing, ghost check and Shift translation, and returns an event: nothing, a press or a release.
-`main.cpp` only sends that event to the computer.
+function does the debouncing, ghost check and Commodore layer translation, and returns an event: nothing, a press or a
+release. `main.cpp` only sends that event to the computer.
 
 ### Matrix scanning (`scan_matrix`)
 
-The keyboard is an 8x8 grid of switches. Each key connects one column line to one row line.
+The keyboard is an 8x8 grid of switches, with RESTORE as a single extra switch on a ninth column. Each key connects one
+column line to one row line.
 
 1. All lines start as inputs with pull-ups, so they idle **high**.
 2. One column at a time is set to **output low**.
@@ -174,56 +196,66 @@ and accepted once the ghost pattern is gone.
 **Trade-off:** if all four corners really are pressed, the last one pressed is rejected, because it looks identical to a
 ghost.
 
-### Key mapping and Shift handling (`resolve`)
+### Key mapping and the Commodore layer (`resolve`)
 
 `keymap[col][row]` holds a USB HID usage code for each switch position. The VIC-20 has only four function keys
-(F1/F3/F5/F7) and two cursor keys, and Shift gives access to the other four function keys and the opposite arrow
-directions. When Shift is held, `resolve()` translates these keys to their PC equivalents.
+(F1/F3/F5/F7) and two cursor keys, and no Esc, Tab, Caps Lock, Up or Left key. The Commodore key acts as a layer key:
+while it is held, `resolve()` translates certain codes to their PC equivalents (see the table in Features).
+
+The Commodore position itself is `K_NONE`, as are the unused positions in the RESTORE column. A `K_NONE` position
+changes its state but never produces a press or release event.
 
 The VIC-20 has separate `+` and `=` keys, while a PC keyboard only has `=` (with `+` on Shift). The VIC-20's `+` key
 therefore sends the keypad plus (`K_KPPLUS`), so it types `+` on its own.
 
+Hold Commodore **before** pressing the other key. If the other key is already down when Commodore is pressed, nothing
+changes, because the code was decided at the moment of the press.
+
+### RESTORE
+
+RESTORE is wired to its own line on the original machine, not to the matrix. Here it is connected as a ninth column
+(column 8), so it goes through the same debouncing and press/release code as every other key and sends the Windows key
+(Command on a Mac). Tapping it on its own opens the Start menu on Windows.
+
 ### Why `sent_code` exists
 
-The code sent for a key can depend on whether Shift is held at the moment of the press. The code actually sent is
+The code sent for a key can depend on whether Commodore is held at the moment of the press. The code actually sent is
 therefore saved per key, so releasing a key always releases the same code that was pressed.
 
-For example: hold Shift, press F1 (sends F2), release Shift, then release F1. Without `sent_code` the release would be
-looked up again as plain F1, and F2 would stay stuck down on the computer.
+For example: hold Commodore, press F1 (sends F2), release Commodore, then release F1. Without `sent_code` the release
+would be looked up again as plain F1, and F2 would stay stuck down on the computer.
 
 ### Sending to the computer
 
 Codes are sent with `Keyboard.pressRaw()` and `Keyboard.releaseRaw()`, so the HID codes in `keyboard_keys.h` go to the
-host unchanged. A key is sent as soon as it is accepted (after debouncing), not when it is released. The Shift and Ctrl
-keys are sent as ordinary key presses as well, so the host also sees them as modifiers.
+host unchanged. A key is sent as soon as it is accepted (after debouncing), not when it is released. The Shift, Ctrl and
+Alt keys are sent as ordinary key presses as well, so the host also sees them as modifiers.
 
 ## Configuration
 
 Hardware settings are in `include/config.h`:
 
-| Constant              | Purpose                               | Default          |
-|-----------------------|---------------------------------------|------------------|
-| `rowPins` / `col_pins` | GPIO assignments                      | see wiring table |
-| `COL_SETTLE_MICRO_S`  | Delay after driving a column low (µs) | 300              |
-| `SERIAL_BAUD`         | Debug serial speed                    | 115200           |
+| Constant                | Purpose                               | Default          |
+|-------------------------|---------------------------------------|------------------|
+| `row_pins` / `col_pins` | GPIO assignments                      | see wiring table |
+| `COL_SETTLE_MICRO_S`    | Delay after driving a column low (µs) | 300              |
+| `SERIAL_BAUD`           | Debug serial speed                    | 115200           |
 
 Settings that belong to the keyboard logic are in `lib/keyboard_logic/keyboard_logic.h`:
 
-| Constant                            | Purpose                                | Default      |
-|-------------------------------------|----------------------------------------|--------------|
-| `NUMBER_OF_ROWS` / `NUMBER_OF_COLS` | Matrix size                            | 8 / 8        |
-| `DEBOUNCE_THRESHOLD`                | Scans a change must persist            | 3            |
-| `FN_SHIFT_OFFSET`                   | Offset from F1/F3/F5/F7 to F2/F4/F6/F8 | 1            |
-| `LSHIFT_COL/ROW`, `RSHIFT_COL/ROW`  | Matrix position of the Shift keys      | (7,1), (6,6) |
+| Constant                            | Purpose                                | Default |
+|-------------------------------------|----------------------------------------|---------|
+| `NUMBER_OF_ROWS` / `NUMBER_OF_COLS` | Matrix size (8 columns + RESTORE)      | 8 / 9   |
+| `DEBOUNCE_THRESHOLD`                | Scans a change must persist            | 3       |
+| `FN_COMBO_OFFSET`                   | Offset from F1/F3/F5/F7 to F2/F4/F6/F8 | 1       |
+| `CBM_COL` / `CBM_ROW`               | Matrix position of the Commodore key   | (3, 0)  |
 
 To remap a key, edit the `keymap` array in `lib/keyboard_logic/keyboard_logic.cpp` and use any code from
-`keyboard_keys.h` (or add new HID codes to the enum).
+`keyboard_keys.h` (or add new HID codes to the enum). To change what the Commodore layer does, edit `resolve()`.
 
 ## Known limitations
 
-- The VIC-20 has no dedicated Up or Left key, which is why they sit on Shift + Down and Shift + Right.
-- The VIC-20's RESTORE key is wired separately to the NMI line and is not part of the matrix, so it is not supported for
-  now. I am planning on making it trigger the Windows key (and command on Mac if possible)
+- The VIC-20 has no dedicated Up, Left, Esc, Tab or Caps Lock key, which is why they live on the Commodore layer.
 - Ghost detection can reject a genuine key when three other keys of the same rectangle are already held. This is an
   accepted limitation, I chose to ignore a genuine key rather than a key being sent that was never touched.
 

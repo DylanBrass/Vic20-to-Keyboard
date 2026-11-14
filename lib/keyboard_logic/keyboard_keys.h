@@ -48,6 +48,8 @@ enum KeyCode : uint8_t
     K_RSHIFT = 0xE5,
     K_LGUI = 0xE3,
     K_NONE = 0x00,
+    K_TAB = 0x2B,
+    K_CAPS = 0x39,
 };
 
 #endif //VIC20_KEYBOARD_KEYBOARD_KEYS_H

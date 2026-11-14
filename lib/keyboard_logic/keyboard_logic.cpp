@@ -6,9 +6,9 @@
 
 const uint8_t keymap[NUMBER_OF_COLS][NUMBER_OF_ROWS] = {
     {K_LCTRL, K_A, K_D, K_G, K_J, K_RIGHT, K_QUOTE, K_L},
-    {K_1, K_3, K_5, K_7, K_9, K_BKSP, K_DEL, K_KPPLUS},
+    {K_1, K_3, K_5, K_7, K_9, K_BKSP, K_LALT, K_KPPLUS},
     {K_GRAVE, K_W, K_R, K_Y, K_I, K_ENTER, K_RBRACKET, K_P},
-    {K_LALT, K_S, K_F, K_H, K_K, K_F3, K_EQUAL, K_SEMI},
+    {K_NONE, K_S, K_F, K_H, K_K, K_F3, K_EQUAL, K_SEMI},
     {K_2, K_4, K_6, K_8, K_0, K_F7, K_HOME, K_MINUS},
     {K_Q, K_E, K_T, K_U, K_O, K_F5, K_BACKSLASH, K_LBRACKET},
     {K_SPACE, K_Z, K_C, K_B, K_M, K_F1, K_RSHIFT, K_PERIOD},
@@ -17,30 +17,34 @@ const uint8_t keymap[NUMBER_OF_COLS][NUMBER_OF_ROWS] = {
 };
 
 /**
- * Returns the state of the shift key (left or right shift)
- * @return true if shift key is pressed, false otherwise
+ * Returns the state of the commodore key
+ * @return true if commodore key is pressed, false otherwise
  */
-bool shift_held(const KeyboardState& state)
+bool cbm_held(const KeyboardState& state)
 {
-    return state.stable_state[LSHIFT_COL][LSHIFT_ROW] || state.stable_state[RSHIFT_COL][RSHIFT_ROW];
+    return state.stable_state[CBM_COL][CBM_ROW];
 }
 
 /**
- * Checks if the code needs to be changed because of any mutation (e.g. shift)
+ * Checks if the code needs to be changed because of any mutation (e.g. the commodore key)
  * @param code the code from the keymap to be verified
  * @return the code value (will be the same if it is unaffected by any mutation)
  */
 uint8_t resolve(const KeyboardState& state, const uint8_t code)
 {
-    if (!shift_held(state)) return code;
+    if (!cbm_held(state)) return code;
     switch (code)
     {
     case K_F1:
     case K_F3:
     case K_F5:
-    case K_F7: return code + FN_SHIFT_OFFSET;
+    case K_F7: return code + FN_COMBO_OFFSET;
     case K_DOWN: return K_UP;
     case K_RIGHT: return K_LEFT;
+    case K_BKSP: return K_DEL;
+    case K_GRAVE: return K_CAPS;
+    case K_LSHIFT:
+    case K_RSHIFT: return K_TAB;
     default: return code;
     }
 }
@@ -121,9 +125,9 @@ KeyEvent get_key_action(KeyboardState& state, const int col, const int row)
             const uint8_t code = resolve(state, keymap[col][row]);
             // Save the code for later release of key
             state.sent_code[col][row] = code;
-            event = {KeyEventType::Press, code};
+            if (code != K_NONE) event = {KeyEventType::Press, code};
         }
-        else
+        else if (state.sent_code[col][row] != K_NONE)
         {
             // If the raw state is now false, return the release of the key with
             // the same code that was sent.
