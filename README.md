@@ -14,17 +14,17 @@ matrix and sends the keys to your computer as a standard USB HID keyboard, using
 - A **Commodore key layer** for keys that are separate on a PC (the Commodore key sends nothing by itself):
 
   | Keys                                  | Sends                       |
-    |---------------------------------------|-----------------------------|
+      |---------------------------------------|-----------------------------|
   | `Commodore + F1/F3/F5/F7`             | `F2/F4/F6/F8`               |
   | `Commodore + CRSR Down`               | `Up`                        |
   | `Commodore + CRSR Right`              | `Left`                      |
-  | `Commodore + Shift`                   | `Tab`                       |
+  | `Commodore + Right Shift`             | `Tab`                       |
   | `Commodore + RUN/STOP`                | `Esc`                       |
   | `Commodore + ←`                       | `Caps Lock`                 |
 
 - `£` is `Alt`, and `RESTORE` is the Windows key (Command on a Mac)
 - `←` is a backtick in en_US
-- Shift is a plain Shift, with no translation
+- Left Shift is always a plain Shift, and Right Shift is a plain Shift unless Commodore is held
 - Separate `+` and `=` keys, as on the original keyboard
 - Serial debug output of every key press
 - Key logic kept separate from the hardware code, with unit tests that run on your PC
@@ -125,18 +125,21 @@ On Windows, the `native` environment needs a C/C++ compiler such as MinGW instal
 
 The tests cover:
 
-- **Commodore layer:** F1/F3/F5/F7, Down, Right, RUN/STOP and Shift are translated while Commodore is held, other keys
-  are left alone, Shift on its own translates nothing, and the Commodore key sends nothing by itself
-- **Special keys:** RUN/STOP is Alt (Esc with Commodore), `←` is a backtick (Caps Lock with Commodore), and Shift is Tab
-  with Commodore
-- **Debouncing:** a press is only sent after `DEBOUNCE_THRESHOLD` scans, short blips are ignored, and releases are
-  debounced too
+- **Commodore layer:** F1/F3/F5/F7, Down, Right, RUN/STOP, `←` and Right Shift are translated while Commodore is held,
+  other keys are left alone (including Left Shift and `£`), the layer only applies once Commodore is debounced, and the
+  Commodore key sends nothing by itself
+- **Special keys:** RUN/STOP is Alt (Esc with Commodore), `←` is a backtick (Caps Lock with Commodore), and Right Shift
+  is Tab with Commodore, while Left Shift and Right Shift on their own are plain Shifts
+- **Debouncing:** a press is only sent after `DEBOUNCE_THRESHOLD` scans, short blips are ignored (also while a key is
+  held), releases are debounced too, and every key is debounced independently
 - **`sent_code`:** releasing a key releases the code that was sent, even if Commodore was released first
-- **Ghost detection:** three pressed corners make the fourth a possible ghost, the ghost key is held back until the
-  pattern disappears, and releases are never blocked
+- **Ghost detection:** three pressed corners make the fourth a possible ghost (at every corner and at the matrix edges),
+  keys in a straight line are not ghosts, the ghost key is held back until the pattern disappears and then needs a full
+  debounce cycle, and releases are never blocked
 - **RESTORE:** it sends and releases the Windows key, and it can never be flagged as a ghost
-- **Keymap:** no two switches share the same key code (empty positions are ignored), `+` and `=` are separate keys, and
-  the Commodore position has no code of its own
+- **Keymap:** no two switches share the same key code (empty positions are ignored), `+` and `=` are separate keys, the
+  Commodore position has no code of its own, the only other empty positions are in the RESTORE column, and no Commodore
+  translation duplicates the code of a plain key
 
 The matrix scanning and USB code in `main.cpp` talk to hardware, so they can only be checked on a real board.
 
@@ -200,7 +203,8 @@ ghost.
 
 `keymap[col][row]` holds a USB HID usage code for each switch position. The VIC-20 has only four function keys
 (F1/F3/F5/F7) and two cursor keys, and no Esc, Tab, Caps Lock, Up or Left key. The Commodore key acts as a layer key:
-while it is held, `resolve()` translates certain codes to their PC equivalents (see the table in Features).
+while it is held, `resolve()` translates certain codes to their PC equivalents (see the table in Features). Only the
+Right Shift is translated (to Tab); the Left Shift is left unchanged while Commodore is held.
 
 The Commodore position itself is `K_NONE`, as are the unused positions in the RESTORE column. A `K_NONE` position
 changes its state but never produces a press or release event.

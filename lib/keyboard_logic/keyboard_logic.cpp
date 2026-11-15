@@ -6,13 +6,13 @@
 
 const uint8_t keymap[NUMBER_OF_COLS][NUMBER_OF_ROWS] = {
     {K_LCTRL, K_A, K_D, K_G, K_J, K_RIGHT, K_QUOTE, K_L},
-    {K_1, K_3, K_5, K_7, K_9, K_BKSP, K_LALT, K_KPPLUS},
+    {K_1, K_3, K_5, K_7, K_9, K_BKSP, K_RALT, K_KPPLUS},
     {K_GRAVE, K_W, K_R, K_Y, K_I, K_ENTER, K_RBRACKET, K_P},
     {K_NONE, K_S, K_F, K_H, K_K, K_F3, K_EQUAL, K_SEMI},
     {K_2, K_4, K_6, K_8, K_0, K_F7, K_HOME, K_MINUS},
     {K_Q, K_E, K_T, K_U, K_O, K_F5, K_BACKSLASH, K_LBRACKET},
     {K_SPACE, K_Z, K_C, K_B, K_M, K_F1, K_RSHIFT, K_PERIOD},
-    {K_ESC, K_LSHIFT, K_X, K_V, K_N, K_DOWN, K_SLASH, K_COMMA},
+    {K_LALT, K_LSHIFT, K_X, K_V, K_N, K_DOWN, K_SLASH, K_COMMA},
     {K_LGUI, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE, K_NONE},
 };
 
@@ -43,7 +43,7 @@ uint8_t resolve(const KeyboardState& state, const uint8_t code)
     case K_RIGHT: return K_LEFT;
     case K_BKSP: return K_DEL;
     case K_GRAVE: return K_CAPS;
-    case K_LSHIFT:
+    case K_LALT: return K_ESC;
     case K_RSHIFT: return K_TAB;
     default: return code;
     }

@@ -45,6 +45,7 @@ enum KeyCode : uint8_t
     K_LCTRL = 0xE0,
     K_LSHIFT = 0xE1,
     K_LALT = 0xE2,
+    K_RALT = 0xE6,
     K_RSHIFT = 0xE5,
     K_LGUI = 0xE3,
     K_NONE = 0x00,
