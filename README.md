@@ -14,7 +14,7 @@ matrix and sends the keys to your computer as a standard USB HID keyboard, using
 - A **Commodore key layer** for keys that are separate on a PC (the Commodore key sends nothing by itself):
 
   | Keys                                  | Sends                       |
-      |---------------------------------------|-----------------------------|
+  |---------------------------------------|-----------------------------|
   | `Commodore + F1/F3/F5/F7`             | `F2/F4/F6/F8`               |
   | `Commodore + CRSR Down`               | `Up`                        |
   | `Commodore + CRSR Right`              | `Left`                      |
