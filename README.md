@@ -35,39 +35,16 @@ matrix and sends the keys to your computer as a standard USB HID keyboard, using
 - An ESP32-S3 board with native USB (the USB port connected to the chip's USB pins, not only a UART bridge)
 - Jumper wires or a breakout for the keyboard connector
 
-No resistors are needed for the matrix, since the firmware uses the ESP32's internal pull-up resistors.
+[🔗 View Interactive Keyboard Matrix & Ghosting Demo](https://DylanBrass.github.io/Vic20-to-Keyboard/matrix_keyboard_mcu_pins_ghosting.html)
+
+[🔗 View Interactive Pull-up Schematic](https://DylanBrass.github.io/Vic20-to-Keyboard/pullup_pin_pressed_vs_not_pressed_schematic.html)
 
 ### Wiring
 
-| Matrix line     | ESP32-S3 GPIO |
-|-----------------|---------------|
-| Row 0           | 4             |
-| Row 1           | 5             |
-| Row 2           | 6             |
-| Row 3           | 7             |
-| Row 4           | 15            |
-| Row 5           | 16            |
-| Row 6           | 17            |
-| Row 7           | 18            |
-| Col 0           | 8             |
-| Col 1           | 9             |
-| Col 2           | 10            |
-| Col 3           | 11            |
-| Col 4           | 12            |
-| Col 5           | 13            |
-| Col 6           | 14            |
-| Col 7           | 21            |
-| Col 8 (RESTORE) | 38            |
+![Wiring](./docs/wiring.png)
 
 RESTORE is not part of the original matrix, so it is wired as a ninth column: one of its two wires goes to the **Row 0**
 line (GPIO 4, joined at the same point as that row's jumper) and the other goes to **GPIO 38**.
-
-Pins can be changed in `include/config.h`. Avoid the ESP32-S3 strapping pins (0, 3, 45, 46) and the USB pins (19, 20).
-On some DevKitC-1 revisions GPIO 38 also drives the onboard RGB LED, which may flicker as the column is scanned. If it
-does, move the RESTORE column to another free GPIO in `col_pins`.
-
-> Which keyboard connector pin maps to which row or column depends on your VIC-20 revision. Use a multimeter's
-> continuity mode to trace them, or check the VIC-20 schematic.
 
 ## Project structure
 
@@ -262,6 +239,10 @@ To remap a key, edit the `keymap` array in `lib/keyboard_logic/keyboard_logic.cp
 - The VIC-20 has no dedicated Up, Left, Esc, Tab or Caps Lock key, which is why they live on the Commodore layer.
 - Ghost detection can reject a genuine key when three other keys of the same rectangle are already held. This is an
   accepted limitation, I chose to ignore a genuine key rather than a key being sent that was never touched.
+
+## Resources
+
+Keyboard matrix circuit. (2021, September 7). Wikipedia. https://en.wikipedia.org/wiki/Keyboard_matrix_circuit
 
 ## Acknowledgements
 

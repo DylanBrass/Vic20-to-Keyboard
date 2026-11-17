@@ -1,3 +1,5 @@
 .pio
 .idea/
 cmake-build-*/
+.vscode/
+./docs/wiring.svg

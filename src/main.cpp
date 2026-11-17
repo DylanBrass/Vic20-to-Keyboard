@@ -18,8 +18,8 @@ void scan_matrix()
 {
     for (int c = 0; c < NUMBER_OF_COLS; c++)
     {
-        digitalWrite(col_pins[c], LOW);
         pinMode(col_pins[c], OUTPUT);
+        digitalWrite(col_pins[c], LOW);
         delayMicroseconds(COL_SETTLE_MICRO_S);
         // The row pin becomes low when it connects to a col pin that was set to low and as output
         for (int r = 0; r < NUMBER_OF_ROWS; r++) state.raw_state[c][r] = digitalRead(row_pins[r]) == LOW;
